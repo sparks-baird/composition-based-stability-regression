@@ -1,8 +1,23 @@
-# load the matbench data for formation energy
+from matbench.bench import MatbenchBenchmark
+from crabnet._crabnet import CrabNet
+mb = MatbenchBenchmark(subset=["matbench_mp_e_form"])
+task = list(mb.tasks)[0]
+task.load()
 
-# load the most recent snapshot of Materials Project formation energy, `e_above_hull`, and mpids. See e.g.
+# %% load the matbench data for formation energy
+
+# %% load the most recent snapshot of Materials Project formation energy, `e_above_hull`, and mpids using MPRester()
+# make sure to not post your API key by doing e.g. https://pymatgen.org/usage.html#setting-the-pmg-mapi-key-in-the-config-file
 # https://github.com/sparks-baird/mat_discover/blob/main/mat_discover/utils/generate_elasticity_data.py
 # https://github.com/sparks-baird/RoboCrab/blob/master/download-stable-elasticity.py
+
+for fold in task.folds:
+train_inputs, train_outputs = task.get_train_and_val_data(fold)
+
+# calculate avg, min, max, and std formation energies for repeat compositions, using e.g. a modified version of groupby_formula
+# https://github.com/sparks-baird/mat_discover/blob/b92501384865bfe455a7d186487c972bec0a01b0/mat_discover/utils/data.py#L8
+
+# cross-reference the Materials Project snapshot MPIDs with the Matbench MPIDs to add e_above_hull to Matbench data
 
 # %% format training and validation data as DataFrames with "formula", "avg", "min", "max", "std", and "e_above_hull" columns
 form_name = "formula"
@@ -24,8 +39,6 @@ extended_names = eform_names + sigma_names
 # %% naive, robust transfer-learning-like implementation using multiple CrabNet models
 # https://crabnet.readthedocs.io/en/latest/crabnet.html#crabnet.crabnet_.CrabNet
 
-# the following steps need to occur inside of a loop iterating through the Matbench folds
-
 epochs = 300
 # Ax/SAASBO hyperparameter optimization results could be integrated https://arxiv.org/abs/2203.12597
 
@@ -45,10 +58,12 @@ cb_min.fit(train_df.rename(columns={min_name: targ_name})
 cb_max.fit(train_df.rename(columns={max_name: targ_name})
 cb_std.fit(train_df.rename(columns={std_name: targ_name})
            
+test_inputs, test_outputs = task.get_test_data(fold, include_target=True)
+           
 val_df[avg_name], val_df[avg_sig_name] = cb_avg.predict(val_df, return_uncertainty=True)
 val_df[min_name], val_df[min_sig_name] = cb_min.predict(val_df, return_uncertainty=True)
 val_df[max_name], val_df[max_sig_name] = cb_max.predict(val_df, return_uncertainty=True)
-val_df[std_name], val_df[std_sig_name] = cb_std.predict(val_df, return_uncertainty=True)
+val_df[std_name], val_df[std_sig_name] = cb_std.predict(val_df, return_uncertainty=True)           
 
 cb_hull.fit(train_df.rename(columns={ehull_name: targ_name})
 ehull_pred, ehull_sigma, ehull_true = cb_hull.predict(val_df, return_uncertainty=True, return_true=True)
