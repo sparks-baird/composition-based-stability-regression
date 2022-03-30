@@ -1,10 +1,11 @@
+import numpy as np
 from matbench.bench import MatbenchBenchmark
 from crabnet._crabnet import CrabNet
 import pandas as pd
 from mp_api import MPRester
 
 
-key = 'YOUR_API_KEY'
+key = "YOUR_API_KEY"
 mpr = MPRester()
 mb = MatbenchBenchmark(subset=["matbench_mp_e_form"])
 task = list(mb.tasks)[0]
@@ -17,30 +18,53 @@ task.load()
 # https://github.com/sparks-baird/RoboCrab/blob/master/download-stable-elasticity.py
 
 with MPRester(api_key=key) as mpr:
-    query = mpr.query(criteria, ['pretty_formula', 'reduced_cell_formula', 'material_id', 'formation_energy_per_atom', 'e_above_hull'])
+    query = mpr.query(
+        criteria,
+        [
+            "pretty_formula",
+            "reduced_cell_formula",
+            "material_id",
+            "formation_energy_per_atom",
+            "e_above_hull",
+        ],
+    )
     print(len(query))
-    pretty_formula = [query[i]['pretty_formula'] for i in range(len(query))]
-    cell_formula = [query[i]['reduced_cell_formula'] for i in range(len(query))]
-    mat_id = [query[i]['material_id'] for i in range(len(query))]
-    form_e = [query[i]['formation_energy_per_atom'] for i in range(len(query))]
-    e_hull = [query[i]['e_above_hull'] for i in range(len(query))]
+    pretty_formula = [query[i]["pretty_formula"] for i in range(len(query))]
+    cell_formula = [query[i]["reduced_cell_formula"] for i in range(len(query))]
+    mat_id = [query[i]["material_id"] for i in range(len(query))]
+    form_e = [query[i]["formation_energy_per_atom"] for i in range(len(query))]
+    e_hull = [query[i]["e_above_hull"] for i in range(len(query))]
 
-ugly_formula = [] # get formulas in the form of "Li2O1", useful for crabnet I guess
-for material in cell_formula: # a material is a dictionary
-    coeff = [int(material[element]) for element in material] # a stoichiometric coefficient is the value associated to a material-key
-    els = [element for element in material]    
+ugly_formula = []  # get formulas in the form of "Li2O1", useful for crabnet I guess
+for material in cell_formula:  # a material is a dictionary
+    coeff = [
+        int(material[element]) for element in material
+    ]  # a stoichiometric coefficient is the value associated to a material-key
+    els = [element for element in material]
     formula_lst = [str(i) + str(j) for i, j in zip(els, coeff)]
-    formula = ''.join(formula_lst)
+    formula = "".join(formula_lst)
     ugly_formula.append(formula)
 pretty_formula_array = np.array(pretty_formula)
 ugly_formula_array = np.array(ugly_formula)
 mat_id_array = np.array(mat_id)
 form_e_array = np.array(form_e)
 e_hull_array = np.array(e_hull)
-data = np.column_stack((pretty_formula_array, ugly_formula_array, mat_id_array, form_e_array, e_hull_array))
-df = pd.DataFrame(data = data, index = None, columns = ['pretty_formula', 'ugly_formula', 'mat_id', 'formation_energy', 'e_above_hull'])
-df['formation_energy'] = df['formation_energy'].astype("float64")
-df['e_above_hull'] = df['e_above_hull'].astype("float64")
+data = np.column_stack(
+    (pretty_formula_array, ugly_formula_array, mat_id_array, form_e_array, e_hull_array)
+)
+df = pd.DataFrame(
+    data=data,
+    index=None,
+    columns=[
+        "pretty_formula",
+        "ugly_formula",
+        "mat_id",
+        "formation_energy",
+        "e_above_hull",
+    ],
+)
+df["formation_energy"] = df["formation_energy"].astype("float64")
+df["e_above_hull"] = df["e_above_hull"].astype("float64")
 df.reset_index(inplace=True)
 #%%
 for fold in task.folds:
