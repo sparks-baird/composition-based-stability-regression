@@ -11,7 +11,7 @@ pmg config --add PMG_MAPI_KEY 123456789
 """
 import numpy as np
 from matbench.bench import MatbenchBenchmark
-from crabnet._crabnet import CrabNet
+from crabnet.crabnet_ import CrabNet
 import pandas as pd
 from pymatgen.ext.matproj import MPRester
 
