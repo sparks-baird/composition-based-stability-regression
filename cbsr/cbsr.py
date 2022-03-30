@@ -1,12 +1,20 @@
+"""Composition-based stability regression for formation energy and `e_above_hull`.
+
+To use MPRester with your API_KEY, run the following line in a command prompt:
+```bash
+pmg config --add PMG_MAPI_KEY <USER_API_KEY>
+```
+e.g.
+```bash
+pmg config --add PMG_MAPI_KEY 123456789
+```
+"""
 import numpy as np
 from matbench.bench import MatbenchBenchmark
 from crabnet._crabnet import CrabNet
 import pandas as pd
 from mp_api import MPRester
 
-
-key = "YOUR_API_KEY"
-mpr = MPRester()
 mb = MatbenchBenchmark(subset=["matbench_mp_e_form"])
 task = list(mb.tasks)[0]
 task.load()
@@ -17,10 +25,10 @@ task.load()
 # https://github.com/sparks-baird/mat_discover/blob/main/mat_discover/utils/generate_elasticity_data.py
 # https://github.com/sparks-baird/RoboCrab/blob/master/download-stable-elasticity.py
 
-with MPRester(api_key=key) as mpr:
-    query = mpr.query(
-        criteria,
-        [
+with MPRester() as mpr:
+    data = mpr.query(
+        criteria={},
+        properties=[
             "pretty_formula",
             "reduced_cell_formula",
             "material_id",
@@ -28,12 +36,12 @@ with MPRester(api_key=key) as mpr:
             "e_above_hull",
         ],
     )
-    print(len(query))
-    pretty_formula = [query[i]["pretty_formula"] for i in range(len(query))]
-    cell_formula = [query[i]["reduced_cell_formula"] for i in range(len(query))]
-    mat_id = [query[i]["material_id"] for i in range(len(query))]
-    form_e = [query[i]["formation_energy_per_atom"] for i in range(len(query))]
-    e_hull = [query[i]["e_above_hull"] for i in range(len(query))]
+    print(len(data))
+    pretty_formula = [data[i]["pretty_formula"] for i in range(len(data))]
+    cell_formula = [data[i]["reduced_cell_formula"] for i in range(len(data))]
+    mat_id = [data[i]["material_id"] for i in range(len(data))]
+    form_e = [data[i]["formation_energy_per_atom"] for i in range(len(data))]
+    e_hull = [data[i]["e_above_hull"] for i in range(len(data))]
 
 ugly_formula = []  # get formulas in the form of "Li2O1", useful for crabnet I guess
 for material in cell_formula:  # a material is a dictionary
