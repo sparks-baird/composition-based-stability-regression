@@ -13,7 +13,7 @@ import numpy as np
 from matbench.bench import MatbenchBenchmark
 from crabnet._crabnet import CrabNet
 import pandas as pd
-from mp_api import MPRester
+from pymatgen.ext.matproj import MPRester
 
 mb = MatbenchBenchmark(subset=["matbench_mp_e_form"])
 task = list(mb.tasks)[0]
