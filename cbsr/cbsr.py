@@ -1,11 +1,14 @@
 from matbench.bench import MatbenchBenchmark
 from crabnet._crabnet import CrabNet
 import pandas as pd
+from mp_api import MPRester
 
+
+key = 'YOUR_API_KEY'
+mpr = MPRester()
 mb = MatbenchBenchmark(subset=["matbench_mp_e_form"])
 task = list(mb.tasks)[0]
 task.load()
-
 # %% load the matbench data for formation energy
 
 # %% load the most recent snapshot of Materials Project formation energy, `e_above_hull`, and mpids using MPRester()
@@ -13,6 +16,16 @@ task.load()
 # https://github.com/sparks-baird/mat_discover/blob/main/mat_discover/utils/generate_elasticity_data.py
 # https://github.com/sparks-baird/RoboCrab/blob/master/download-stable-elasticity.py
 
+with MPRester(api_key=key) as mpr:
+    query = mpr.query(criteria, ['pretty_formula', 'reduced_cell_formula', 'material_id', 'formation_energy_per_atom', 'e_above_hull'])
+    print(len(query))
+    pretty_formula = [query[i]['pretty_formula'] for i in range(len(query))]
+    cell_formula = [query[i]['reduced_cell_formula'] for i in range(len(query))]
+    mat_id = [query[i]['material_id'] for i in range(len(query))]
+    form_e = [query[i]['formation_energy_per_atom'] for i in range(len(query))]
+    e_hull = [query[i]['e_above_hull'] for i in range(len(query))]
+
+#%%
 for fold in task.folds:
     train_inputs, train_outputs = task.get_train_and_val_data(fold)
 
