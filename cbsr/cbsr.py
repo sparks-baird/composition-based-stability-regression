@@ -1,6 +1,6 @@
 """Composition-based stability regression for formation energy and `e_above_hull`.
 
-To use MPRester with your API_KEY, run the following line in a command prompt:
+To use MPRester with your API_KEY, run the following line in a command prompt [1]:
 ```bash
 pmg config --add PMG_MAPI_KEY <USER_API_KEY>
 ```
@@ -8,6 +8,8 @@ e.g.
 ```bash
 pmg config --add PMG_MAPI_KEY 123456789
 ```
+
+[1] https://pymatgen.org/usage.html#setting-the-pmg-mapi-key-in-the-config-file
 """
 import numpy as np
 from matbench.bench import MatbenchBenchmark
@@ -15,13 +17,7 @@ from crabnet.crabnet_ import CrabNet
 import pandas as pd
 from pymatgen.ext.matproj import MPRester
 
-mb = MatbenchBenchmark(subset=["matbench_mp_e_form"])
-task = list(mb.tasks)[0]
-task.load()
-# %% load the matbench data for formation energy
-
 # %% load the most recent snapshot of Materials Project formation energy, `e_above_hull`, and mpids using MPRester()
-# make sure to not post your API key by doing e.g. https://pymatgen.org/usage.html#setting-the-pmg-mapi-key-in-the-config-file
 # https://github.com/sparks-baird/mat_discover/blob/main/mat_discover/utils/generate_elasticity_data.py
 # https://github.com/sparks-baird/RoboCrab/blob/master/download-stable-elasticity.py
 
@@ -73,8 +69,16 @@ df = pd.DataFrame(
 )
 df["formation_energy"] = df["formation_energy"].astype("float64")
 df["e_above_hull"] = df["e_above_hull"].astype("float64")
-df.reset_index(inplace=True)
-#%%
+df = df.set_index("mat_id")
+
+ehull_df = df["e_above_hull"]
+
+# %% load the matbench data for formation energy
+mb = MatbenchBenchmark(subset=["matbench_mp_e_form"])
+task = list(mb.tasks)[0]
+task.load()
+
+#%% Matbench folds
 for fold in task.folds:
     train_inputs, train_outputs = task.get_train_and_val_data(fold)
 
@@ -82,6 +86,8 @@ for fold in task.folds:
 
     # calculate avg, min, max, and std formation energies for repeat compositions, using e.g. a modified version of groupby_formula
     # https://github.com/sparks-baird/mat_discover/blob/b92501384865bfe455a7d186487c972bec0a01b0/mat_discover/utils/data.py#L8
+
+        
 
     train_df = pd.DataFrame({})
 
