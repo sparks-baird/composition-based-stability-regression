@@ -1,7 +1,7 @@
 # composition-based-stability-regression
 
 ## Installation
-```python
+```bash
 git clone https://github.com/sparks-baird/composition-based-stability-regression.git
 cd composition-based-stability-regression
 conda install flit
