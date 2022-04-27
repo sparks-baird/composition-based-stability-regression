@@ -18,6 +18,7 @@ from crabnet.crabnet_ import CrabNet
 import pandas as pd
 from pymatgen.ext.matproj import MPRester
 from sklearn.model_selection import KFold
+import torch
 
 # %% load the most recent snapshot of Materials Project formation energy, `e_above_hull`, and mpids using MPRester()
 # https://github.com/sparks-baird/mat_discover/blob/main/mat_discover/utils/generate_elasticity_data.py
@@ -104,10 +105,13 @@ grp_formens.columns = [
     "formation_energy_mean",
     "formation_energy_min",
     "formation_energy_max",
-    "e_above_hull_std",
+    "formation_energy_std",
     "formation_energy_count",
 ]
+kfold = KFold(n_splits=5, shuffle=True, random_state=42)
 
+for fold, (train_ids, test_ids) in enumerate(kfold.split(grp_formens)):
+    print("Fold:", fold)
 
 # %% load the matbench data for formation energy
 mb = MatbenchBenchmark(subset=["matbench_mp_e_form"])
