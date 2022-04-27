@@ -11,11 +11,13 @@ pmg config --add PMG_MAPI_KEY 123456789
 
 [1] https://pymatgen.org/usage.html#setting-the-pmg-mapi-key-in-the-config-file
 """
+#%%|
 import numpy as np
 from matbench.bench import MatbenchBenchmark
 from crabnet.crabnet_ import CrabNet
 import pandas as pd
 from pymatgen.ext.matproj import MPRester
+from sklearn.model_selection import KFold
 
 # %% load the most recent snapshot of Materials Project formation energy, `e_above_hull`, and mpids using MPRester()
 # https://github.com/sparks-baird/mat_discover/blob/main/mat_discover/utils/generate_elasticity_data.py
@@ -73,6 +75,39 @@ df["e_above_hull"] = df["e_above_hull"].astype("float64")
 df = df.set_index("mat_id")
 
 ehull_df = df[["e_above_hull"]]
+#%% CV splitting bypassing Matbench
+
+# calculate agg functions for repeat formulas, yielding grp_df to then split with CV
+ehulls = df[["ugly_formula", "e_above_hull"]]
+formens = df[["ugly_formula", "formation_energy"]]
+# I'd separate the two targets for operational tidiness and (my) readability, but please tell me whether it's a good idea
+grp_ehulls = (
+    ehulls.groupby("ugly_formula")
+    .agg(["mean", "min", "max", "std", "count"])
+    .reset_index()
+)
+grp_ehulls.columns = [
+    "ugly_formula",
+    "e_above_hull_mean",
+    "e_above_hull_min",
+    "e_above_hull_max",
+    "e_above_hull_std",
+    "e_above_hull_count",
+]
+grp_formens = (
+    formens.groupby("ugly_formula")
+    .agg(["mean", "min", "max", "std", "count"])
+    .reset_index()
+)
+grp_formens.columns = [
+    "ugly_formula",
+    "formation_energy_mean",
+    "formation_energy_min",
+    "formation_energy_max",
+    "e_above_hull_std",
+    "formation_energy_count",
+]
+
 
 # %% load the matbench data for formation energy
 mb = MatbenchBenchmark(subset=["matbench_mp_e_form"])
