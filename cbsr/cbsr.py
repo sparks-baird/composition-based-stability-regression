@@ -111,35 +111,47 @@ grp_formen.columns = [
     "formation_energy_count",
 ]
 assert (grp_ehull.loc[:, "ugly_formula"] == grp_formen.loc[:, "ugly_formula"]).all()
-features = grp_ehull[["ugly_formula", "e_above_hull_avg"]]
-features.columns = ["formula", "target"]
-featurized_forms, toy_y, formulae, skipped = composition.generate_features(features)
 #%%
 kfold = KFold(n_splits=5, shuffle=True, random_state=42)
 
-for fold, (train_index, test_index) in enumerate(kfold.split(featurized_forms)):
+for fold, (train_index, test_index) in enumerate(kfold.split(grp_formen)):
+    """starting with formation energy, should be easier to get good results"""
     print(f"Fold {fold}")
     print(
         f"Training set has {len(train_index)} elements; test set has {len(test_index)} elements"
     )
     X_train, X_test = (
-        featurized_forms.loc[train_index],
-        featurized_forms.loc[test_index],
+        grp_formen.loc[train_index]["ugly_formula"],
+        grp_formen.loc[test_index]["ugly_formula"],
     )
     y_train, y_test = (
-        grp_formen["formation_energy_avg"][train_index],
-        grp_formen["formation_energy_avg"][test_index],
+        grp_formen["formation_energy_min"][train_index],
+        grp_formen["formation_energy_min"][test_index],
     )
 
     # train on min value
     # train on avg value, with warm start
+    y_train_2, y_test_2 = (
+        grp_formen["formation_energy_avg"][train_index],
+        grp_formen["formation_energy_avg"][test_index],
+    )
+
     # train on max value, with warmer start. Do you think using this incremental order might help?
+    y_train_3, y_test_3 = (
+        grp_formen["formation_energy_avg"][train_index],
+        grp_formen["formation_energy_avg"][test_index],
+    )
+
     # train on std value? I see that this would provide valuable info on how reliable the method is for a certain composition, but is there any other reason to do this?
+    y_train_4, y_test_4 = (
+        grp_formen["formation_energy_std"][train_index],
+        grp_formen["formation_energy_std"][test_index],
+    )
+
     # validate on min value
     # validate on avg value
     # validate on max value
     # validate on std value
-
 # plot validation errors vs fold to check for improvement.
 
 
