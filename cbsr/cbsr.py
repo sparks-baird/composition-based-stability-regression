@@ -144,16 +144,16 @@ for fold, (train_index, test_index) in enumerate(kfold.split(featurized_forms)):
 
 
 # %% load the matbench data for formation energy
-mb = MatbenchBenchmark(subset=["matbench_mp_e_form"])
-task = list(mb.tasks)[0]
-task.load()
+# mb = MatbenchBenchmark(subset=["matbench_mp_e_form"])
+# task = list(mb.tasks)[0]
+# task.load()
 
 #%% Matbench folds
-for fold in task.folds:
-    train_inputs, train_outputs = task.get_train_and_val_data(fold)
+# for fold in task.folds:
+    # train_inputs, train_outputs = task.get_train_and_val_data(fold)
 
     # create a merged DataFrame that drops indices not in train_inputs
-    train_df = train_inputs.to_frame().merge(ehull_df, how="left")
+    # train_df = train_inputs.to_frame().merge(ehull_df, how="left")
 
     # calculate avg, min, max, and std formation energies for repeat compositions, using e.g. a modified version of groupby_formula
     # https://github.com/sparks-baird/mat_discover/blob/b92501384865bfe455a7d186487c972bec0a01b0/mat_discover/utils/data.py#L8
