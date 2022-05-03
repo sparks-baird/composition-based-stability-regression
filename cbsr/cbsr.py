@@ -19,6 +19,7 @@ import pandas as pd
 from pymatgen.ext.matproj import MPRester
 from sklearn.model_selection import KFold
 import torch
+from CBFV import composition
 
 # %% load the most recent snapshot of Materials Project formation energy, `e_above_hull`, and mpids using MPRester()
 # https://github.com/sparks-baird/mat_discover/blob/main/mat_discover/utils/generate_elasticity_data.py
@@ -81,37 +82,66 @@ ehull_df = df[["e_above_hull"]]
 # calculate agg functions for repeat formulas, yielding grp_df to then split with CV
 ehulls = df[["ugly_formula", "e_above_hull"]]
 formens = df[["ugly_formula", "formation_energy"]]
+
 # I'd separate the two targets for operational tidiness and (my) readability, but please tell me whether it's a good idea
-grp_ehulls = (
+grp_ehull = (
     ehulls.groupby("ugly_formula")
     .agg(["mean", "min", "max", "std", "count"])
     .reset_index()
 )
-grp_ehulls.columns = [
+grp_ehull.columns = [
     "ugly_formula",
-    "e_above_hull_mean",
+    "e_above_hull_avg",
     "e_above_hull_min",
     "e_above_hull_max",
     "e_above_hull_std",
     "e_above_hull_count",
 ]
-grp_formens = (
+grp_formen = (
     formens.groupby("ugly_formula")
     .agg(["mean", "min", "max", "std", "count"])
     .reset_index()
 )
-grp_formens.columns = [
+grp_formen.columns = [
     "ugly_formula",
-    "formation_energy_mean",
+    "formation_energy_avg",
     "formation_energy_min",
     "formation_energy_max",
     "formation_energy_std",
     "formation_energy_count",
 ]
+assert (grp_ehull.loc[:, "ugly_formula"] == grp_formen.loc[:, "ugly_formula"]).all()
+features = grp_ehull[["ugly_formula", "e_above_hull_avg"]]
+features.columns = ["formula", "target"]
+featurized_forms, toy_y, formulae, skipped = composition.generate_features(features)
+#%%
 kfold = KFold(n_splits=5, shuffle=True, random_state=42)
 
-for fold, (train_ids, test_ids) in enumerate(kfold.split(grp_formens)):
-    print("Fold:", fold)
+for fold, (train_index, test_index) in enumerate(kfold.split(featurized_forms)):
+    print(f"Fold {fold}")
+    print(
+        f"Training set has {len(train_index)} elements; test set has {len(test_index)} elements"
+    )
+    X_train, X_test = (
+        featurized_forms.loc[train_index],
+        featurized_forms.loc[test_index],
+    )
+    y_train, y_test = (
+        grp_formen["formation_energy_avg"][train_index],
+        grp_formen["formation_energy_avg"][test_index],
+    )
+
+    # train on min value
+    # train on avg value, with warm start
+    # train on max value, with warmer start. Do you think using this incremental order might help?
+    # train on std value? I see that this would provide valuable info on how reliable the method is for a certain composition, but is there any other reason to do this?
+    # validate on min value
+    # validate on avg value
+    # validate on max value
+    # validate on std value
+
+# plot validation errors vs fold to check for improvement.
+
 
 # %% load the matbench data for formation energy
 mb = MatbenchBenchmark(subset=["matbench_mp_e_form"])
